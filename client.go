@@ -15,6 +15,7 @@ type PredictionClient struct {
 	mu      sync.RWMutex
 	rpcConn *grpc.ClientConn
 	svcConn tf.PredictionServiceClient
+	inputs	string
 }
 
 type Prediction struct {
@@ -28,7 +29,11 @@ func NewClient(addr string) (*PredictionClient, error) {
 		return nil, err
 	}
 	c := tf.NewPredictionServiceClient(conn)
-	return &PredictionClient{rpcConn: conn, svcConn: c}, nil
+	return &PredictionClient{rpcConn: conn, svcConn: c, inputs: "images"}, nil
+}
+
+func (c *PredictionClient) SetInputsName(name string) {
+	c.inputs = name
 }
 
 func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Prediction, error) {
@@ -37,7 +42,7 @@ func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Predicti
 			Name: modelName,
 		},
 		Inputs: map[string]*tfcore.TensorProto{
-			"images": &tfcore.TensorProto{
+			c.inputs: &tfcore.TensorProto{
 				Dtype:     tfcore.DataType_DT_STRING,
 				StringVal: [][]byte{imgdata},
 				TensorShape: &tfcore.TensorShapeProto{
