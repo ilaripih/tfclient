@@ -3,6 +3,7 @@ package tfclient
 import (
 	"errors"
 	"log"
+	"reflect"
 	"sync"
 
 	tfcore "tensorflow/core/framework"
@@ -62,6 +63,7 @@ func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Predicti
 	}
 
 	if c.debug {
+		log.Println("Output format:", reflect.TypeOf(resp.Outputs))
 		log.Println("Output:", resp.Outputs)
 	}
 
