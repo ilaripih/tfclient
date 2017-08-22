@@ -72,7 +72,7 @@ func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Predicti
 	return result, nil
 }
 
-func (c *PredictionClient) PredictBoxes(modelName string, imgdata []byte) ([]BoxPrediction, error) {
+func (c *PredictionClient) PredictBoxes(modelName string, imgdata []byte, minConfidence float32) ([]BoxPrediction, error) {
 	resp, err := c.PredictRaw(modelName, imgdata)
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (c *PredictionClient) PredictBoxes(modelName string, imgdata []byte) ([]Box
 	var result []BoxPrediction
 	boxes := resp["detection_boxes"].FloatVal
 	for i, score := range resp["detection_scores"].FloatVal {
-		if score < 0.5 {
+		if score < minConfidence {
 			break
 		}
 
