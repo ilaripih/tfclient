@@ -2,6 +2,7 @@ package tfclient
 
 import (
 	"errors"
+	"log"
 	"sync"
 
 	tfcore "tensorflow/core/framework"
@@ -16,6 +17,7 @@ type PredictionClient struct {
 	rpcConn *grpc.ClientConn
 	svcConn tf.PredictionServiceClient
 	inputs	string
+	debug	bool
 }
 
 type Prediction struct {
@@ -29,11 +31,15 @@ func NewClient(addr string) (*PredictionClient, error) {
 		return nil, err
 	}
 	c := tf.NewPredictionServiceClient(conn)
-	return &PredictionClient{rpcConn: conn, svcConn: c, inputs: "images"}, nil
+	return &PredictionClient{rpcConn: conn, svcConn: c, inputs: "images", debug: false}, nil
 }
 
 func (c *PredictionClient) SetInputsName(name string) {
 	c.inputs = name
+}
+
+func (c *PredictionClient) SetDebugging(debug bool) {
+	c.debug = debug
 }
 
 func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Prediction, error) {
@@ -53,6 +59,10 @@ func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Predicti
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if c.debug {
+		log.Println("Output:", resp.Outputs)
 	}
 
 	classesTensor, scoresTensor := resp.Outputs["classes"], resp.Outputs["scores"]
