@@ -44,6 +44,26 @@ func (c *PredictionClient) SetDebugging(debug bool) {
 }
 
 func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Prediction, error) {
+	resp, err := c.PredictRaw(modelName, imgdata)
+	if err != nil {
+		return nil, err
+	}
+
+	classesTensor, scoresTensor := resp["classes"], resp["scores"]
+	if classesTensor == nil || scoresTensor == nil {
+		return nil, errors.New("missing expected tensors in response")
+	}
+
+	classes := classesTensor.StringVal
+	scores := scoresTensor.FloatVal
+	var result []Prediction
+	for i := 0; i < len(classes) && i < len(scores); i++ {
+		result = append(result, Prediction{Class: string(classes[i]), Score: scores[i]})
+	}
+	return result, nil
+}
+
+func (c *PredictionClient) PredictRaw(modelName string, imgdata []byte) (map[string]*tfcore.TensorProto, error) {
 	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
 		ModelSpec: &tf.ModelSpec{
 			Name: modelName,
@@ -67,18 +87,7 @@ func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Predicti
 		log.Println("Output:", resp.Outputs)
 	}
 
-	classesTensor, scoresTensor := resp.Outputs["classes"], resp.Outputs["scores"]
-	if classesTensor == nil || scoresTensor == nil {
-		return nil, errors.New("missing expected tensors in response")
-	}
-
-	classes := classesTensor.StringVal
-	scores := scoresTensor.FloatVal
-	var result []Prediction
-	for i := 0; i < len(classes) && i < len(scores); i++ {
-		result = append(result, Prediction{Class: string(classes[i]), Score: scores[i]})
-	}
-	return result, nil
+	return resp.Outputs, nil
 }
 
 func (c *PredictionClient) Close() error {
