@@ -72,7 +72,7 @@ func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Predicti
 	return result, nil
 }
 
-func (c *PredictionClient) PredictBoxes(modelName string, imgdata []byte) (map[string]*tfcore.TensorProto, error) {
+func (c *PredictionClient) PredictBoxes(modelName string, imgdata []byte) ([]BoxPrediction, error) {
 	resp, err := c.PredictRaw(modelName, imgdata)
 	if err != nil {
 		return nil, err
