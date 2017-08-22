@@ -26,6 +26,15 @@ type Prediction struct {
 	Score float32 `json:"score"`
 }
 
+type BoxPrediction struct {
+	Class string `json:"class"`
+	Score float32 `json:"score"`
+	Y1 float32 `json:"y1"`
+	X1 float32 `json:"x1"`
+	Y2 float32 `json:"y2"`
+	X2 float32 `json:"x2"`
+}
+
 func NewClient(addr string) (*PredictionClient, error) {
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
@@ -60,6 +69,34 @@ func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Predicti
 	for i := 0; i < len(classes) && i < len(scores); i++ {
 		result = append(result, Prediction{Class: string(classes[i]), Score: scores[i]})
 	}
+	return result, nil
+}
+
+func (c *PredictionClient) PredictBoxes(modelName string, imgdata []byte) (map[string]*tfcore.TensorProto, error) {
+	resp, err := c.PredictRaw(modelName, imgdata)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []BoxPrediction
+	boxes := resp["detection_boxes"].FloatVal
+	for i, score := range resp["detection_scores"].FloatVal {
+		if score < 0.5 {
+			break
+		}
+
+		coordIndex := i * 4
+		p := BoxPrediction{
+			Class: "",
+			Score: score,
+			Y1: boxes[coordIndex],
+			X1: boxes[coordIndex + 1],
+			Y2: boxes[coordIndex + 2],
+			X2: boxes[coordIndex + 3],
+		}
+		result = append(result, p)
+	}
+
 	return result, nil
 }
 
