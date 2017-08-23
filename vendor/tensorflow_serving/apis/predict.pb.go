@@ -40,7 +40,7 @@ type PredictRequest struct {
 func (m *PredictRequest) Reset()                    { *m = PredictRequest{} }
 func (m *PredictRequest) String() string            { return proto.CompactTextString(m) }
 func (*PredictRequest) ProtoMessage()               {}
-func (*PredictRequest) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{0} }
+func (*PredictRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
 
 func (m *PredictRequest) GetModelSpec() *ModelSpec {
 	if m != nil {
@@ -72,7 +72,7 @@ type PredictResponse struct {
 func (m *PredictResponse) Reset()                    { *m = PredictResponse{} }
 func (m *PredictResponse) String() string            { return proto.CompactTextString(m) }
 func (*PredictResponse) ProtoMessage()               {}
-func (*PredictResponse) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{1} }
+func (*PredictResponse) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{1} }
 
 func (m *PredictResponse) GetOutputs() map[string]*tensorflow5.TensorProto {
 	if m != nil {
@@ -86,9 +86,9 @@ func init() {
 	proto.RegisterType((*PredictResponse)(nil), "tensorflow.serving.PredictResponse")
 }
 
-func init() { proto.RegisterFile("tensorflow_serving/apis/predict.proto", fileDescriptor5) }
+func init() { proto.RegisterFile("tensorflow_serving/apis/predict.proto", fileDescriptor6) }
 
-var fileDescriptor5 = []byte{
+var fileDescriptor6 = []byte{
 	// 320 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xac, 0x91, 0xcd, 0x4a, 0xfb, 0x40,
 	0x14, 0xc5, 0x99, 0x84, 0x7f, 0xff, 0xf4, 0xb6, 0x7e, 0x30, 0x1b, 0x43, 0x40, 0x28, 0x2d, 0x4a,

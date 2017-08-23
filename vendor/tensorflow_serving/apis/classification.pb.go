@@ -8,6 +8,7 @@ Package tensorflow_serving is a generated protocol buffer package.
 It is generated from these files:
 	tensorflow_serving/apis/classification.proto
 	tensorflow_serving/apis/get_model_metadata.proto
+	tensorflow_serving/apis/inference.proto
 	tensorflow_serving/apis/input.proto
 	tensorflow_serving/apis/model.proto
 	tensorflow_serving/apis/prediction_service.proto
@@ -23,6 +24,10 @@ It has these top-level messages:
 	SignatureDefMap
 	GetModelMetadataRequest
 	GetModelMetadataResponse
+	InferenceTask
+	InferenceResult
+	MultiInferenceRequest
+	MultiInferenceResponse
 	ExampleList
 	ExampleListWithContext
 	Input
@@ -79,10 +84,8 @@ func (m *Class) GetScore() float32 {
 	return 0
 }
 
-// List of classes for a single item
-// (tensorflow.Example or tensorflow.InferenceExample.features).
+// List of classes for a single item (tensorflow.Example).
 type Classifications struct {
-	// List of Classifications for an item sorted by decreasing score.
 	Classes []*Class `protobuf:"bytes,1,rep,name=classes" json:"classes,omitempty"`
 }
 
@@ -98,9 +101,8 @@ func (m *Classifications) GetClasses() []*Class {
 	return nil
 }
 
-// For tensorflow.Example this will contain one result.
-// For tensorflow.InferenceExample this will contain one result for each
-// InferenceExample::features and in the same order as the features.
+// Contains one result per input example, in the same order as the input in
+// ClassificationRequest.
 type ClassificationResult struct {
 	Classifications []*Classifications `protobuf:"bytes,1,rep,name=classifications" json:"classifications,omitempty"`
 }

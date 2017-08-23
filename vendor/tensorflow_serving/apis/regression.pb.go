@@ -13,8 +13,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// Regression result for a single item
-// (tensorflow.Example or tensorflow.InferenceExample.features).
+// Regression result for a single item (tensorflow.Example).
 type Regression struct {
 	Value float32 `protobuf:"fixed32,1,opt,name=value" json:"value,omitempty"`
 }
@@ -22,7 +21,7 @@ type Regression struct {
 func (m *Regression) Reset()                    { *m = Regression{} }
 func (m *Regression) String() string            { return proto.CompactTextString(m) }
 func (*Regression) ProtoMessage()               {}
-func (*Regression) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
+func (*Regression) Descriptor() ([]byte, []int) { return fileDescriptor7, []int{0} }
 
 func (m *Regression) GetValue() float32 {
 	if m != nil {
@@ -31,9 +30,8 @@ func (m *Regression) GetValue() float32 {
 	return 0
 }
 
-// For tensorflow.Example this will contain one result.
-// For tensorflow.InferenceExample this will contain one result for each
-// InferenceExample::features.
+// Contains one result per input example, in the same order as the input in
+// RegressionRequest.
 type RegressionResult struct {
 	Regressions []*Regression `protobuf:"bytes,1,rep,name=regressions" json:"regressions,omitempty"`
 }
@@ -41,7 +39,7 @@ type RegressionResult struct {
 func (m *RegressionResult) Reset()                    { *m = RegressionResult{} }
 func (m *RegressionResult) String() string            { return proto.CompactTextString(m) }
 func (*RegressionResult) ProtoMessage()               {}
-func (*RegressionResult) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{1} }
+func (*RegressionResult) Descriptor() ([]byte, []int) { return fileDescriptor7, []int{1} }
 
 func (m *RegressionResult) GetRegressions() []*Regression {
 	if m != nil {
@@ -60,7 +58,7 @@ type RegressionRequest struct {
 func (m *RegressionRequest) Reset()                    { *m = RegressionRequest{} }
 func (m *RegressionRequest) String() string            { return proto.CompactTextString(m) }
 func (*RegressionRequest) ProtoMessage()               {}
-func (*RegressionRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{2} }
+func (*RegressionRequest) Descriptor() ([]byte, []int) { return fileDescriptor7, []int{2} }
 
 func (m *RegressionRequest) GetModelSpec() *ModelSpec {
 	if m != nil {
@@ -83,7 +81,7 @@ type RegressionResponse struct {
 func (m *RegressionResponse) Reset()                    { *m = RegressionResponse{} }
 func (m *RegressionResponse) String() string            { return proto.CompactTextString(m) }
 func (*RegressionResponse) ProtoMessage()               {}
-func (*RegressionResponse) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{3} }
+func (*RegressionResponse) Descriptor() ([]byte, []int) { return fileDescriptor7, []int{3} }
 
 func (m *RegressionResponse) GetResult() *RegressionResult {
 	if m != nil {
@@ -99,9 +97,9 @@ func init() {
 	proto.RegisterType((*RegressionResponse)(nil), "tensorflow.serving.RegressionResponse")
 }
 
-func init() { proto.RegisterFile("tensorflow_serving/apis/regression.proto", fileDescriptor6) }
+func init() { proto.RegisterFile("tensorflow_serving/apis/regression.proto", fileDescriptor7) }
 
-var fileDescriptor6 = []byte{
+var fileDescriptor7 = []byte{
 	// 251 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x84, 0x90, 0x31, 0x4f, 0xc3, 0x30,
 	0x10, 0x85, 0xe5, 0x56, 0xad, 0xc4, 0x65, 0x81, 0x13, 0x43, 0x40, 0x02, 0x55, 0x86, 0x21, 0x53,

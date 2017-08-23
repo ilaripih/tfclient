@@ -22,9 +22,9 @@ type SaverDef_CheckpointFormatVersion int32
 const (
 	// Internal legacy format.
 	SaverDef_LEGACY SaverDef_CheckpointFormatVersion = 0
-	// Current format: tf.Saver() which works with tensorflow::table::Table.
+	// Deprecated format: tf.Saver() which works with tensorflow::table::Table.
 	SaverDef_V1 SaverDef_CheckpointFormatVersion = 1
-	// Experimental format under development.
+	// Current format: more efficient.
 	SaverDef_V2 SaverDef_CheckpointFormatVersion = 2
 )
 

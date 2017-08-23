@@ -49,17 +49,20 @@ It has these top-level messages:
 	OpDef
 	OpDeprecation
 	OpList
-	ResourceHandle
+	ResourceHandleProto
 	AllocatorMemoryUsed
 	NodeOutput
+	MemoryStats
 	NodeExecStats
 	DeviceStepStats
 	StepStats
 	SummaryDescription
 	HistogramProto
+	SummaryMetadata
 	Summary
 	TensorDescription
 	TensorProto
+	VariantTensorDataProto
 	TensorShapeProto
 	TensorSliceProto
 	VariableDef
