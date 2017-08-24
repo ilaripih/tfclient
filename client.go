@@ -17,7 +17,6 @@ type PredictionClient struct {
 	mu      sync.RWMutex
 	rpcConn *grpc.ClientConn
 	svcConn tf.PredictionServiceClient
-	inputs	string
 	debug	bool
 }
 
@@ -41,19 +40,15 @@ func NewClient(addr string) (*PredictionClient, error) {
 		return nil, err
 	}
 	c := tf.NewPredictionServiceClient(conn)
-	return &PredictionClient{rpcConn: conn, svcConn: c, inputs: "images", debug: false}, nil
-}
-
-func (c *PredictionClient) SetInputsName(name string) {
-	c.inputs = name
+	return &PredictionClient{rpcConn: conn, svcConn: c, debug: false}, nil
 }
 
 func (c *PredictionClient) SetDebugging(debug bool) {
 	c.debug = debug
 }
 
-func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Prediction, error) {
-	resp, err := c.PredictRaw(modelName, imgdata)
+func (c *PredictionClient) Predict(modelName, inputsName, signatureName string, imgdata []byte) ([]Prediction, error) {
+	resp, err := c.PredictRaw(modelName, inputsName, signatureName, imgdata)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +67,8 @@ func (c *PredictionClient) Predict(modelName string, imgdata []byte) ([]Predicti
 	return result, nil
 }
 
-func (c *PredictionClient) PredictBoxes(modelName string, imgdata []byte, minConfidence float32) ([]BoxPrediction, error) {
-	resp, err := c.PredictRaw(modelName, imgdata)
+func (c *PredictionClient) PredictBoxes(modelName, inputsName, signatureName string, imgdata []byte, minConfidence float32) ([]BoxPrediction, error) {
+	resp, err := c.PredictRaw(modelName, inputsName, signatureName, imgdata)
 	if err != nil {
 		return nil, err
 	}
@@ -100,14 +95,18 @@ func (c *PredictionClient) PredictBoxes(modelName string, imgdata []byte, minCon
 	return result, nil
 }
 
-func (c *PredictionClient) PredictRaw(modelName string, imgdata []byte) (map[string]*tfcore.TensorProto, error) {
+func (c *PredictionClient) PredictRaw(modelName, inputsName, signatureName string, imgdata []byte) (map[string]*tfcore.TensorProto, error) {
+	modelSpec := &tf.ModelSpec{
+		Name: modelName,
+	}
+	if signatureName != "" {
+		modelSpec.SignatureName = signatureName
+	}
+
 	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
-		ModelSpec: &tf.ModelSpec{
-			Name: modelName,
-			SignatureName: "predict_images",
-		},
+		ModelSpec: modelSpec,
 		Inputs: map[string]*tfcore.TensorProto{
-			c.inputs: &tfcore.TensorProto{
+			inputsName: &tfcore.TensorProto{
 				Dtype:     tfcore.DataType_DT_STRING,
 				StringVal: [][]byte{imgdata},
 				TensorShape: &tfcore.TensorShapeProto{
