@@ -104,6 +104,7 @@ func (c *PredictionClient) PredictRaw(modelName string, imgdata []byte) (map[str
 	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
 		ModelSpec: &tf.ModelSpec{
 			Name: modelName,
+			SignatureName: "predict_images",
 		},
 		Inputs: map[string]*tfcore.TensorProto{
 			c.inputs: &tfcore.TensorProto{
