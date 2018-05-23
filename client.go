@@ -17,7 +17,7 @@ type PredictionClient struct {
 	mu      sync.RWMutex
 	rpcConn *grpc.ClientConn
 	svcConn tf.PredictionServiceClient
-	debug	bool
+	debug   bool
 }
 
 type Prediction struct {
@@ -26,12 +26,21 @@ type Prediction struct {
 }
 
 type BoxPrediction struct {
-	Class string `json:"class"`
+	Class string  `json:"class"`
 	Score float32 `json:"score"`
-	Y1 float32 `json:"y1"`
-	X1 float32 `json:"x1"`
-	Y2 float32 `json:"y2"`
-	X2 float32 `json:"x2"`
+	Y1    float32 `json:"y1"`
+	X1    float32 `json:"x1"`
+	Y2    float32 `json:"y2"`
+	X2    float32 `json:"x2"`
+}
+
+var classLabels = []string{
+	"signs",
+	"panels",
+	"vehicles",
+	"people",
+	"license-plates",
+	"traffic_light",
 }
 
 func NewClient(addr string) (*PredictionClient, error) {
@@ -75,19 +84,21 @@ func (c *PredictionClient) PredictBoxes(modelName, inputsName, signatureName str
 
 	var result []BoxPrediction
 	boxes := resp["detection_boxes"].FloatVal
+	classes := resp["detection_classes"].FloatVal
 	for i, score := range resp["detection_scores"].FloatVal {
 		if score < minConfidence {
 			break
 		}
+		classIndex := int(classes[i]) - 1
 
 		coordIndex := i * 4
 		p := BoxPrediction{
-			Class: "",
+			Class: classLabels[classIndex],
 			Score: score,
-			Y1: boxes[coordIndex],
-			X1: boxes[coordIndex + 1],
-			Y2: boxes[coordIndex + 2],
-			X2: boxes[coordIndex + 3],
+			Y1:    boxes[coordIndex],
+			X1:    boxes[coordIndex+1],
+			Y2:    boxes[coordIndex+2],
+			X2:    boxes[coordIndex+3],
 		}
 		result = append(result, p)
 	}
