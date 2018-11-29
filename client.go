@@ -138,6 +138,30 @@ func (c *PredictionClient) PredictRaw(modelName, inputsName, signatureName strin
 	return resp.Outputs, nil
 }
 
+func (c *PredictionClient) GetOutput(modelName, signatureName string) (map[string]*tfcore.TensorProto, error) {
+	modelSpec := &tf.ModelSpec{
+		Name: modelName,
+	}
+	if signatureName != "" {
+		modelSpec.SignatureName = signatureName
+	}
+
+	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
+		ModelSpec: modelSpec,
+		Inputs:    nil,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if c.debug {
+		log.Println("Output format:", reflect.TypeOf(resp.Outputs))
+		log.Println("Output:", resp.Outputs)
+	}
+
+	return resp.Outputs, nil
+}
+
 func (c *PredictionClient) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
