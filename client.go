@@ -138,6 +138,43 @@ func (c *PredictionClient) PredictRaw(modelName, inputsName, signatureName strin
 	return resp.Outputs, nil
 }
 
+func (c *PredictionClient) PredictImage(modelName, inputsName, signatureName string, imgdata []int32, shape [3]int64) (map[string]*tfcore.TensorProto, error) {
+	modelSpec := &tf.ModelSpec{
+		Name: modelName,
+	}
+	if signatureName != "" {
+		modelSpec.SignatureName = signatureName
+	}
+
+	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
+		ModelSpec: modelSpec,
+		Inputs: map[string]*tfcore.TensorProto{
+			inputsName: &tfcore.TensorProto{
+				Dtype:  tfcore.DataType_DT_UINT8,
+				IntVal: imgdata,
+				TensorShape: &tfcore.TensorShapeProto{
+					Dim: []*tfcore.TensorShapeProto_Dim{
+						{Size: 1},
+						{Size: shape[0]},
+						{Size: shape[1]},
+						{Size: shape[2]},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if c.debug {
+		log.Println("Output format:", reflect.TypeOf(resp.Outputs))
+		log.Println("Output:", resp.Outputs)
+	}
+
+	return resp.Outputs, nil
+}
+
 func (c *PredictionClient) GetOutput(modelName, signatureName string) (map[string]*tfcore.TensorProto, error) {
 	modelSpec := &tf.ModelSpec{
 		Name: modelName,
