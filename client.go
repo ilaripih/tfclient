@@ -2,35 +2,30 @@ package tfclient
 
 import (
 	"bytes"
-	"errors"
 	"image"
 	"log"
 	"reflect"
 	"sync"
 
-	proto "github.com/golang/protobuf/proto"
-	meta_graph "tensorflow/core/protobuf"
 	tfcore "tensorflow/core/framework"
+	meta_graph "tensorflow/core/protobuf"
 	tf "tensorflow_serving/apis"
 
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	proto "github.com/golang/protobuf/proto"
+
 	"github.com/nfnt/resize"
 	"golang.org/x/image/bmp"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 type PredictionClient struct {
-	mu      sync.RWMutex
-	rpcConn *grpc.ClientConn
-	svcConn tf.PredictionServiceClient
-	debug   bool
-	inputConf map[string]*InputConfig
+	mu             sync.RWMutex
+	rpcConn        *grpc.ClientConn
+	svcConn        tf.PredictionServiceClient
+	debug          bool
+	inputConf      map[string]*InputConfig
 	inputConfMutex sync.Mutex
-}
-
-type Prediction struct {
-	Class string  `json:"class"`
-	Score float32 `json:"score"`
 }
 
 type BoxPrediction struct {
@@ -44,10 +39,10 @@ type BoxPrediction struct {
 
 type InputConfig struct {
 	SignatureName string
-	InputName string
-	Dtype tfcore.DataType
-	Height int64
-	Width int64
+	InputName     string
+	Dtype         tfcore.DataType
+	Height        int64
+	Width         int64
 }
 
 var classLabels = []string{
@@ -66,9 +61,9 @@ func NewClient(addr string) (*PredictionClient, error) {
 	}
 	c := tf.NewPredictionServiceClient(conn)
 	return &PredictionClient{
-		rpcConn: conn,
-		svcConn: c,
-		debug: false,
+		rpcConn:   conn,
+		svcConn:   c,
+		debug:     false,
 		inputConf: make(map[string]*InputConfig),
 	}, nil
 }
@@ -77,32 +72,7 @@ func (c *PredictionClient) SetDebugging(debug bool) {
 	c.debug = debug
 }
 
-func (c *PredictionClient) Predict(modelName, inputsName, signatureName string, imgdata []byte) ([]Prediction, error) {
-	resp, err := c.PredictRaw(modelName, inputsName, signatureName, imgdata)
-	if err != nil {
-		return nil, err
-	}
-
-	classesTensor, scoresTensor := resp["classes"], resp["scores"]
-	if classesTensor == nil || scoresTensor == nil {
-		return nil, errors.New("missing expected tensors in response")
-	}
-
-	classes := classesTensor.StringVal
-	scores := scoresTensor.FloatVal
-	var result []Prediction
-	for i := 0; i < len(classes) && i < len(scores); i++ {
-		result = append(result, Prediction{Class: string(classes[i]), Score: scores[i]})
-	}
-	return result, nil
-}
-
-func (c *PredictionClient) PredictBoxes(modelName, inputsName, signatureName string, imgdata []byte, minConfidence float32) ([]BoxPrediction, error) {
-	resp, err := c.PredictRaw(modelName, inputsName, signatureName, imgdata)
-	if err != nil {
-		return nil, err
-	}
-
+func (c *PredictionClient) FormatBoxes(resp map[string]*tfcore.TensorProto, minConfidence float32) []BoxPrediction {
 	var result []BoxPrediction
 	boxes := resp["detection_boxes"].FloatVal
 	classes := resp["detection_classes"].FloatVal
@@ -124,39 +94,7 @@ func (c *PredictionClient) PredictBoxes(modelName, inputsName, signatureName str
 		result = append(result, p)
 	}
 
-	return result, nil
-}
-
-func (c *PredictionClient) PredictRaw(modelName, inputsName, signatureName string, imgdata []byte) (map[string]*tfcore.TensorProto, error) {
-	modelSpec := &tf.ModelSpec{
-		Name: modelName,
-	}
-	if signatureName != "" {
-		modelSpec.SignatureName = signatureName
-	}
-
-	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
-		ModelSpec: modelSpec,
-		Inputs: map[string]*tfcore.TensorProto{
-			inputsName: &tfcore.TensorProto{
-				Dtype:     tfcore.DataType_DT_STRING,
-				StringVal: [][]byte{imgdata},
-				TensorShape: &tfcore.TensorShapeProto{
-					Dim: []*tfcore.TensorShapeProto_Dim{{Size: 1}},
-				},
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if c.debug {
-		log.Println("Output format:", reflect.TypeOf(resp.Outputs))
-		log.Println("Output:", resp.Outputs)
-	}
-
-	return resp.Outputs, nil
+	return result
 }
 
 func (c *PredictionClient) GetInputConfig(modelName string) (*InputConfig, error) {
@@ -171,7 +109,7 @@ func (c *PredictionClient) GetInputConfig(modelName string) (*InputConfig, error
 		Name: modelName,
 	}
 	resp, err := c.svcConn.GetModelMetadata(context.Background(), &tf.GetModelMetadataRequest{
-		ModelSpec: modelSpec,
+		ModelSpec:     modelSpec,
 		MetadataField: []string{"signature_def"},
 	})
 	if err != nil {
@@ -235,8 +173,8 @@ func (c *PredictionClient) PredictImages(modelName, signatureName string, images
 		}
 		content := buf.Bytes()
 		inputProto = &tfcore.TensorProto{
-			Dtype: inputConf.Dtype,
-			StringVal: [][]byte{content},
+			Dtype:       inputConf.Dtype,
+			StringVal:   [][]byte{content},
 			TensorShape: tfshape,
 		}
 	} else {
@@ -257,7 +195,7 @@ func (c *PredictionClient) PredictImages(modelName, signatureName string, images
 				{Size: 3},
 			},
 		}
-		content := make([]byte, int64(len(images)) * w * h * 3)
+		content := make([]byte, int64(len(images))*w*h*3)
 		i := 0
 		for _, img := range images {
 			if mustResize {
@@ -277,9 +215,9 @@ func (c *PredictionClient) PredictImages(modelName, signatureName string, images
 			}
 		}
 		inputProto = &tfcore.TensorProto{
-			Dtype: inputConf.Dtype,
+			Dtype:         inputConf.Dtype,
 			TensorContent: content,
-			TensorShape: tfshape,
+			TensorShape:   tfshape,
 		}
 	}
 	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
