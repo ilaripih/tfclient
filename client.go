@@ -13,8 +13,8 @@ import (
 
 	proto "github.com/golang/protobuf/proto"
 
-	"github.com/nfnt/resize"
 	"golang.org/x/image/bmp"
+	"golang.org/x/image/draw"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -145,20 +145,7 @@ func (c *PredictionClient) GetInputConfig(modelName string) (*InputConfig, error
 	return &ret, nil
 }
 
-func (c *PredictionClient) PredictImages(modelName, signatureName string, images []image.Image) (map[string]*tfcore.TensorProto, error) {
-	inputConf, err := c.GetInputConfig(modelName)
-	if err != nil {
-		return nil, err
-	}
-	modelSpec := &tf.ModelSpec{
-		Name: modelName,
-	}
-	if signatureName != "" {
-		modelSpec.SignatureName = signatureName
-	} else if inputConf.SignatureName != "" {
-		modelSpec.SignatureName = inputConf.SignatureName
-	}
-
+func (c *PredictionClient) FormatInputImages(images []image.Image, inputConf *InputConfig) (*tfcore.TensorProto, error) {
 	var inputProto *tfcore.TensorProto
 	var tfshape *tfcore.TensorShapeProto
 	if inputConf.Dtype == tfcore.DataType_DT_STRING {
@@ -181,8 +168,8 @@ func (c *PredictionClient) PredictImages(modelName, signatureName string, images
 		mustResize := true
 		w := inputConf.Width
 		h := inputConf.Height
+		bounds := images[0].Bounds()
 		if w <= 0 || h <= 0 {
-			bounds := images[0].Bounds()
 			w = int64(bounds.Max.X)
 			h = int64(bounds.Max.Y)
 			mustResize = false
@@ -199,18 +186,41 @@ func (c *PredictionClient) PredictImages(modelName, signatureName string, images
 		i := 0
 		for _, img := range images {
 			if mustResize {
-				img = resize.Resize(uint(inputConf.Width), uint(inputConf.Height), img, resize.NearestNeighbor)
+				rect := image.Rect(0, 0, int(inputConf.Width), int(inputConf.Height))
+				dst := image.NewRGBA(rect)
+				draw.NearestNeighbor.Scale(dst, rect, img, bounds, draw.Over, nil)
+				img = dst
 			}
-			for y := int64(0); y < h; y++ {
-				for x := int64(0); x < w; x++ {
-					c := img.At(int(x), int(y))
-					r, g, b, _ := c.RGBA()
-					content[i] = byte(r)
-					i++
-					content[i] = byte(g)
-					i++
-					content[i] = byte(b)
-					i++
+
+			var pix []uint8
+			switch v := img.(type) {
+			case *image.RGBA:
+				pix = v.Pix
+			case *image.NRGBA:
+				pix = v.Pix
+			}
+
+			if pix == nil {
+				// very slow fallback for non-RGBA images
+				for y := int64(0); y < h; y++ {
+					for x := int64(0); x < w; x++ {
+						c := img.At(int(x), int(y))
+						r, g, b, _ := c.RGBA()
+						content[i] = byte(r)
+						i++
+						content[i] = byte(g)
+						i++
+						content[i] = byte(b)
+						i++
+					}
+				}
+			} else {
+				nPix := len(pix)
+				for j := 0; j < nPix; j += 4 {
+					content[i] = pix[j]
+					content[i+1] = pix[j+1]
+					content[i+2] = pix[j+2]
+					i += 3
 				}
 			}
 		}
@@ -220,6 +230,29 @@ func (c *PredictionClient) PredictImages(modelName, signatureName string, images
 			TensorShape:   tfshape,
 		}
 	}
+
+	return inputProto, nil
+}
+
+func (c *PredictionClient) PredictImages(modelName, signatureName string, images []image.Image) (map[string]*tfcore.TensorProto, error) {
+	inputConf, err := c.GetInputConfig(modelName)
+	if err != nil {
+		return nil, err
+	}
+	modelSpec := &tf.ModelSpec{
+		Name: modelName,
+	}
+	if signatureName != "" {
+		modelSpec.SignatureName = signatureName
+	} else if inputConf.SignatureName != "" {
+		modelSpec.SignatureName = inputConf.SignatureName
+	}
+
+	inputProto, err := c.FormatInputImages(images, inputConf)
+	if err != nil {
+		return nil, err
+	}
+
 	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
 		ModelSpec: modelSpec,
 		Inputs: map[string]*tfcore.TensorProto{
