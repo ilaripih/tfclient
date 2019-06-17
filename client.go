@@ -234,6 +234,38 @@ func (c *PredictionClient) FormatInputImages(images []image.Image, inputConf *In
 	return inputProto, nil
 }
 
+func (c *PredictionClient) GetModelSpec(modelName, signatureName string, inputConf *InputConfig) *tf.ModelSpec {
+	modelSpec := &tf.ModelSpec{
+		Name: modelName,
+	}
+	if signatureName != "" {
+		modelSpec.SignatureName = signatureName
+	} else if inputConf.SignatureName != "" {
+		modelSpec.SignatureName = inputConf.SignatureName
+	}
+
+	return modelSpec
+}
+
+func (c *PredictionClient) PredictRaw(modelSpec *tf.ModelSpec, inputConf *InputConfig, inputProto *tfcore.TensorProto) (map[string]*tfcore.TensorProto, error) {
+	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
+		ModelSpec: modelSpec,
+		Inputs: map[string]*tfcore.TensorProto{
+			inputConf.InputName: inputProto,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if c.debug {
+		log.Println("Output format:", reflect.TypeOf(resp.Outputs))
+		log.Println("Output:", resp.Outputs)
+	}
+
+	return resp.Outputs, nil
+}
+
 func (c *PredictionClient) PredictImages(modelName, signatureName string, images []image.Image) (map[string]*tfcore.TensorProto, error) {
 	inputConf, err := c.GetInputConfig(modelName)
 	if err != nil {
@@ -253,22 +285,7 @@ func (c *PredictionClient) PredictImages(modelName, signatureName string, images
 		return nil, err
 	}
 
-	resp, err := c.svcConn.Predict(context.Background(), &tf.PredictRequest{
-		ModelSpec: modelSpec,
-		Inputs: map[string]*tfcore.TensorProto{
-			inputConf.InputName: inputProto,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if c.debug {
-		log.Println("Output format:", reflect.TypeOf(resp.Outputs))
-		log.Println("Output:", resp.Outputs)
-	}
-
-	return resp.Outputs, nil
+	return c.PredictRaw(modelSpec, inputConf, inputProto)
 }
 
 func (c *PredictionClient) GetOutput(modelName, signatureName string) (map[string]*tfcore.TensorProto, error) {
