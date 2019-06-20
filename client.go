@@ -20,6 +20,7 @@ import (
 )
 
 type TensorProto = tfcore.TensorProto
+type ModelSpec = tf.ModelSpec
 
 type PredictionClient struct {
 	mu             sync.RWMutex
