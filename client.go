@@ -19,6 +19,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+type TensorProto = tfcore.TensorProto
+
 type PredictionClient struct {
 	mu             sync.RWMutex
 	rpcConn        *grpc.ClientConn
