@@ -148,7 +148,7 @@ func (c *PredictionClient) GetInputConfig(modelName string) (*InputConfig, error
 	return &ret, nil
 }
 
-func (c *PredictionClient) FormatInputImages(images []image.Image, inputConf *InputConfig) (*tfcore.TensorProto, error) {
+func (c *PredictionClient) FormatInputImages(images []image.Image, inputConf *InputConfig, scaler draw.Scaler) (*tfcore.TensorProto, error) {
 	var inputProto *tfcore.TensorProto
 	var tfshape *tfcore.TensorShapeProto
 	if inputConf.Dtype == tfcore.DataType_DT_STRING {
@@ -191,7 +191,7 @@ func (c *PredictionClient) FormatInputImages(images []image.Image, inputConf *In
 			if mustResize {
 				rect := image.Rect(0, 0, int(inputConf.Width), int(inputConf.Height))
 				dst := image.NewRGBA(rect)
-				draw.NearestNeighbor.Scale(dst, rect, img, bounds, draw.Over, nil)
+				scaler.Scale(dst, rect, img, bounds, draw.Over, nil)
 				img = dst
 			}
 
@@ -269,7 +269,7 @@ func (c *PredictionClient) PredictRaw(modelSpec *tf.ModelSpec, inputConf *InputC
 	return resp.Outputs, nil
 }
 
-func (c *PredictionClient) PredictImages(modelName, signatureName string, images []image.Image) (map[string]*tfcore.TensorProto, error) {
+func (c *PredictionClient) PredictImages(modelName, signatureName string, images []image.Image, scaler draw.Scaler) (map[string]*tfcore.TensorProto, error) {
 	inputConf, err := c.GetInputConfig(modelName)
 	if err != nil {
 		return nil, err
@@ -283,7 +283,7 @@ func (c *PredictionClient) PredictImages(modelName, signatureName string, images
 		modelSpec.SignatureName = inputConf.SignatureName
 	}
 
-	inputProto, err := c.FormatInputImages(images, inputConf)
+	inputProto, err := c.FormatInputImages(images, inputConf, scaler)
 	if err != nil {
 		return nil, err
 	}
