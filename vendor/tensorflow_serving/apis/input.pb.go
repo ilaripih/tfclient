@@ -6,7 +6,7 @@ package tensorflow_serving
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import tensorflow1 "tensorflow/core/example"
+import tensorflow1 "github.com/tensorflow/tensorflow/tensorflow/go/core/example"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -42,31 +42,37 @@ func (m *ExampleList) GetExamples() []*tensorflow1.Example {
 // to perform some inference on.
 //
 // context: {
-//   feature: {
-//     key  : "query"
-//     value: {
-//       bytes_list: {
-//         value: [ "pizza" ]
+//   features: {
+//     feature: {
+//       key  : "query"
+//       value: {
+//         bytes_list: {
+//           value: [ "pizza" ]
+//         }
 //       }
 //     }
 //   }
 // }
 // examples: {
-//   feature: {
-//     key  : "cuisine"
-//     value: {
-//       bytes_list: {
-//         value: [ "Pizzeria" ]
+//   features: {
+//     feature: {
+//       key  : "cuisine"
+//       value: {
+//         bytes_list: {
+//           value: [ "Pizzeria" ]
+//         }
 //       }
 //     }
 //   }
 // }
 // examples: {
-//   feature: {
-//     key  : "cuisine"
-//     value: {
-//       bytes_list: {
-//         value: [ "Taqueria" ]
+//   features: {
+//     feature: {
+//       key  : "cuisine"
+//       value: {
+//         bytes_list: {
+//           value: [ "Taqueria" ]
+//         }
 //       }
 //     }
 //   }

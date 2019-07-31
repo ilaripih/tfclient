@@ -10,7 +10,7 @@ cd ..
 
 mkdir -p protobuf
 cd protobuf
-wget -N https://raw.githubusercontent.com/tensorflow/tensorflow/master/tensorflow/core/protobuf/{meta_graph,saver}.proto
+wget -N https://raw.githubusercontent.com/tensorflow/tensorflow/master/tensorflow/core/protobuf/{meta_graph,saver,saved_object_graph,struct,trackable_object_graph}.proto
 cd ..
 
 mkdir -p example

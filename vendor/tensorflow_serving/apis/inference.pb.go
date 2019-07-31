@@ -14,6 +14,9 @@ var _ = math.Inf
 
 // Inference request such as classification, regression, etc...
 type InferenceTask struct {
+	// Model Specification. If version is not specified, will use the latest
+	// (numerical) version.
+	// All ModelSpecs in a MultiInferenceRequest must access the same model name.
 	ModelSpec *ModelSpec `protobuf:"bytes,1,opt,name=model_spec,json=modelSpec" json:"model_spec,omitempty"`
 	// Signature's method_name. Should be one of the method names defined in
 	// third_party/tensorflow/python/saved_model/signature_constants.py.

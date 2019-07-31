@@ -7,9 +7,10 @@ import (
 	"reflect"
 	"sync"
 
-	tfcore "tensorflow/core/framework"
-	meta_graph "tensorflow/core/protobuf"
 	tf "tensorflow_serving/apis"
+
+	tfcore "github.com/tensorflow/tensorflow/tensorflow/go/core/framework"
+	meta_graph "github.com/tensorflow/tensorflow/tensorflow/go/core/protobuf"
 
 	proto "github.com/golang/protobuf/proto"
 
@@ -58,7 +59,11 @@ var classLabels = []string{
 }
 
 func NewClient(addr string) (*PredictionClient, error) {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	conn, err := grpc.Dial(
+		addr,
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)),
+		grpc.WithInsecure(),
+	)
 	if err != nil {
 		return nil, err
 	}

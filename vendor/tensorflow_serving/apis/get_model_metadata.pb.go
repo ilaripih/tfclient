@@ -7,7 +7,7 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import google_protobuf1 "github.com/golang/protobuf/ptypes/any"
-import tensorflow13 "tensorflow/core/protobuf"
+import tensorflow17 "github.com/tensorflow/tensorflow/tensorflow/go/core/protobuf"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -16,7 +16,7 @@ var _ = math.Inf
 
 // Message returned for "signature_def" field.
 type SignatureDefMap struct {
-	SignatureDef map[string]*tensorflow13.SignatureDef `protobuf:"bytes,1,rep,name=signature_def,json=signatureDef" json:"signature_def,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	SignatureDef map[string]*tensorflow17.SignatureDef `protobuf:"bytes,1,rep,name=signature_def,json=signatureDef" json:"signature_def,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 }
 
 func (m *SignatureDefMap) Reset()                    { *m = SignatureDefMap{} }
@@ -24,7 +24,7 @@ func (m *SignatureDefMap) String() string            { return proto.CompactTextS
 func (*SignatureDefMap) ProtoMessage()               {}
 func (*SignatureDefMap) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
 
-func (m *SignatureDefMap) GetSignatureDef() map[string]*tensorflow13.SignatureDef {
+func (m *SignatureDefMap) GetSignatureDef() map[string]*tensorflow17.SignatureDef {
 	if m != nil {
 		return m.SignatureDef
 	}
@@ -33,6 +33,7 @@ func (m *SignatureDefMap) GetSignatureDef() map[string]*tensorflow13.SignatureDe
 
 type GetModelMetadataRequest struct {
 	// Model Specification indicating which model we are querying for metadata.
+	// If version is not specified, will use the latest (numerical) version.
 	ModelSpec *ModelSpec `protobuf:"bytes,1,opt,name=model_spec,json=modelSpec" json:"model_spec,omitempty"`
 	// Metadata fields to get. Currently supported: "signature_def".
 	MetadataField []string `protobuf:"bytes,2,rep,name=metadata_field,json=metadataField" json:"metadata_field,omitempty"`
