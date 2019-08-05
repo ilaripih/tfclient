@@ -191,10 +191,11 @@ func (c *PredictionClient) FormatInputImages(images []image.Image, inputConf *In
 			},
 		}
 		content := make([]byte, int64(len(images))*w*h*3)
+		rect := image.Rect(0, 0, int(w), int(h))
 		i := 0
 		for _, img := range images {
-			if mustResize {
-				rect := image.Rect(0, 0, int(inputConf.Width), int(inputConf.Height))
+			bounds = img.Bounds()
+			if mustResize && !bounds.Eq(rect) {
 				dst := image.NewRGBA(rect)
 				scaler.Scale(dst, rect, img, bounds, draw.Over, nil)
 				img = dst
