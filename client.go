@@ -160,16 +160,17 @@ func (c *PredictionClient) FormatInputImages(images []image.Image, inputConf *In
 		tfshape = &tfcore.TensorShapeProto{
 			Dim: []*tfcore.TensorShapeProto_Dim{{Size: int64(len(images))}},
 		}
-		buf := new(bytes.Buffer)
-		for _, img := range images {
+		content := make([][]byte, len(images))
+		for i, img := range images {
+			buf := new(bytes.Buffer)
 			if err := bmp.Encode(buf, img); err != nil {
 				return nil, err
 			}
+			content[i] = buf.Bytes()
 		}
-		content := buf.Bytes()
 		inputProto = &tfcore.TensorProto{
 			Dtype:       inputConf.Dtype,
-			StringVal:   [][]byte{content},
+			StringVal:   content,
 			TensorShape: tfshape,
 		}
 	} else {
