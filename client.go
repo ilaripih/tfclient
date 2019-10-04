@@ -47,6 +47,7 @@ type InputConfig struct {
 	Dtype         tfcore.DataType
 	Height        int64
 	Width         int64
+	Version       int64
 }
 
 var classLabels = []string{
@@ -124,12 +125,16 @@ func (c *PredictionClient) GetInputConfig(modelName string) (*InputConfig, error
 		return nil, err
 	}
 
+	var ret InputConfig
+
+	modelSpec = resp.GetModelSpec()
+	ret.Version = modelSpec.GetVersion().GetValue()
+
 	sgDefMap := tf.SignatureDefMap{}
 	if err := proto.Unmarshal(resp.GetMetadata()["signature_def"].Value, &sgDefMap); err != nil {
 		return nil, err
 	}
 	sgDef := sgDefMap.GetSignatureDef()
-	var ret InputConfig
 	var inputs map[string]*meta_graph.TensorInfo
 	if _, ok := sgDef["predict_images"]; ok {
 		ret.SignatureName = "predict_images"
